@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'dart:convert';
@@ -31,8 +34,9 @@ class _PublisherWidgetState extends State<PublisherWidget>
     mode: StopWatchMode.countUp,
   );
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
-  late String _viewers = '0';
+  String _viewers = '0';
   late MillicastPublishUserMedia _publisherMedia;
+  late List<String> _supportedCodecs;
   bool isVideoMuted = false;
   bool isConnected = false;
   bool isLoading = false;
@@ -51,14 +55,12 @@ class _PublisherWidgetState extends State<PublisherWidget>
     if (_localRenderer.srcObject != null) {
       await closeCameraStream();
     }
-    if (_publisherMedia != null) {
-      setState(() {
-        _hangUp(true);
-        isAudioMuted = false;
-        isVideoMuted = false;
-        isConnected = false;
-      });
-    }
+    setState(() {
+      _hangUp(true);
+      isAudioMuted = false;
+      isVideoMuted = false;
+      isConnected = false;
+    });
     super.deactivate();
   }
 
@@ -72,6 +74,7 @@ class _PublisherWidgetState extends State<PublisherWidget>
   @override
   void initState() {
     initRenderers();
+    _setSupportedCodecs();
     initPublish();
     super.initState();
     WidgetsBinding.instance?.addObserver(this);
@@ -109,18 +112,26 @@ class _PublisherWidgetState extends State<PublisherWidget>
       stopWatchTimer.onExecute.add(StopWatchExecute.start);
     });
 
-    Map<String, dynamic> onUserCountOptions = {
-      'accountId': Constants.accountId,
-      'streamName': Constants.streamName,
-      'callback': (countChange) => {refresh(countChange)},
-    };
-
     setUserCount();
   }
 
   void initPublish() async {
     _publisherMedia = await buildPublisher(_localRenderer);
-    setState(() {});
+    setState(() {
+      if (!kIsWeb) {
+        if (Platform.isIOS) {
+          _isMirrored = false;
+        }
+      }
+    });
+  }
+
+  _setSupportedCodecs() async {
+    List<String> codecs =
+        (await PeerConnection.getCapabilities('video'))['codec'];
+    setState(() {
+      _supportedCodecs = codecs;
+    });
   }
 
   void setUserCount() {
@@ -248,6 +259,7 @@ class _PublisherWidgetState extends State<PublisherWidget>
                       builder: (BuildContext context) =>
                           PublisherSettingsWidget(
                               publisherMedia: _publisherMedia,
+                              supportedCodecs: _supportedCodecs,
                               options: options,
                               isConnected: isConnected),
                     ));

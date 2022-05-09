@@ -1,6 +1,6 @@
 name: millicast_flutter_sdk
 description: A Flutter SDK that allows developers to simplify Millicast services integration into their own Android and iOS apps.
-version: 0.0.1
+version: 0.2.1
 homepage: https://github.com/millicast/flutter-sdk
 
 environment:
@@ -9,7 +9,7 @@ environment:
 
 dependencies:
   eventify: ^1.0.0
-  dotenv: ^3.0.0
+  dotenv: ^4.0.0
   flutter:
     sdk: flutter
   logger: ^1.1.0
@@ -33,6 +33,13 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.millicast_flutter_sdk
+        pluginClass: MillicastFlutterSdkPlugin
+      ios:
+        pluginClass: MillicastFlutterSdkPlugin
 
   # To add assets to your package, add an assets section, like this:
   # assets:
